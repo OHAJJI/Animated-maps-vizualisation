@@ -1,0 +1,76 @@
+### Libraires requises
+library(ggplot2)
+library(devtools)
+library(ggmap)
+library(gganimate)
+
+
+
+### Register to Google cloud
+ggmap::register_google("AIzaSyCGyxIKNp0RSsKwGZL3tb_8a0fBgeIZLAc")
+
+###Longitude and latitude extract
+geocode("Morocco") 
+
+###map grab
+get_googlemap("Texas")
+
+###get_stamenmap() qui extracte les cartes depuis les serveurs de stamenmap
+
+
+#Visualisation de la Carte de Mohammedia, Morocco
+
+Geocode<-geocode("Mohammedia, Morocco", source="google")
+map<-get_map(Geocode, maptype="terrain", zoom=13, source="google")
+mapplot<-ggmap(map, darken=c(0.2,"white"))
+
+#importer la BD des localisations GPS des entreprises 
+GPS_entreprise<-read.csv("GPS_data.csv", header=T, sep=",", dec=".")
+
+####ggmap() + geom_point()
+mapplot+geom_point(aes(x=Longitude, y=Latitude),data=GPS_entreprise, color="blue",alpha=0.3, size=3)+
+  ggtitle("Visualisation des entreprises sur la carte")+theme(plot.title=element_text(color="darkblue", hjust=0.5))
+
+### ggmap() + geom_point(aes(color=))
+mapplot+geom_point(aes(x=Longitude, y=Latitude, color=Secteur),data=GPS_entreprise, alpha=0.3, size=3)+
+  ggtitle("Visualisation des entreprises sur la carte")+theme(plot.title=element_text(color="darkblue", hjust=0.5))
+
+### ggmap() + geom_point(aes(color=)) + facet_wrap()
+mapplot+geom_point(aes(x=Longitude, y=Latitude, color=Secteur),data=GPS_entreprise, alpha=0.3, size=3)+
+  facet_wrap(Taille~.)+
+  ggtitle("Visualisation des entreprises sur la carte")+theme(plot.title=element_text(color="darkblue", hjust=0.5))
+
+
+### Transition_state() - gganimate
+
+transtion_state<-ggmap(map)+
+  geom_point(aes(x=Longitude, y=Latitude, color=Secteur),data=GPS_entreprise, size=3)+
+  transition_states(Secteur, transition_length = 2, state_length = 3)+
+  ggtitle('Secteur: {closest_state}')+
+  theme(plot.title=element_text(color="darkblue", hjust=0.5, size=17, face="bold"))
+animate1<-animate(transition_state)
+anim_save("animate1.gif", animate1)
+
+#enter_fade()+exit_fade()
+
+exemple1<-ggmap(map)+
+  geom_point(aes(x=Longitude, y=Latitude, color=Secteur),data=GPS_entreprise, size=3)+
+  transition_states(Secteur, transition_length = 20,state_length = 10)+
+  ggtitle('Secteur: {closest_state}')+
+  theme(plot.title=element_text(color="darkblue", hjust=0.5, size=17, face="bold"))+
+  enter_fade()+exit_fade()
+animate11<-animate(exemple1, duration=20)
+anim_save("animate11.gif", animate11)
+
+### Transition_layers()
+
+transion_layers<-ggmap(map)+
+  geom_point(aes(x=Longitude, y=Latitude),data=GPS_entreprise, size=3, alpha=0.3)+
+  stat_density_2d(aes(x=Longitude, y=Latitude, fill=..level.., alpha=..level..),
+                  data=GPS_entreprise, size=1, geom='polygon')+
+  stat_density_2d(aes(x=Longitude, y=Latitude), data=GPS_entreprise, 
+                  color="green",size=0.5, geom='density_2d')+
+  transition_layers(layer_length = 3, transition_length = 5)
+
+animate2<-animate(transition_layers)
+anim_save("animate2.gif", animate2)
